@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Nanosuit Curtain — Settings</title>
+  <style>
+    :root {
+      --bg: #0a0b0e;
+      --panel: #14161b;
+      --line: #23262e;
+      --txt: #dfe3ea;
+      --muted: #8b94a3;
+      --orange: #ff7a16;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: var(--bg); color: var(--txt);
+      font: 14px/1.5 system-ui, "Segoe UI", Roboto, sans-serif;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 0; min-height: 100vh;
+    }
+    .form { padding: 28px 32px; max-width: 560px; }
+    .preview-wrap {
+      position: sticky; top: 0; height: 100vh; padding: 24px;
+      display: flex; flex-direction: column; gap: 12px;
+      background: linear-gradient(180deg, #0c0d11, #050608);
+      border-left: 1px solid var(--line);
+    }
+    h1 { font-size: 20px; margin: 0 0 4px; letter-spacing: .02em; }
+    h1 b { color: var(--orange); }
+    .sub { color: var(--muted); margin: 0 0 22px; }
+    fieldset { border: 1px solid var(--line); border-radius: 10px; margin: 0 0 18px; padding: 16px 18px; background: var(--panel); }
+    legend { color: var(--orange); font-weight: 700; padding: 0 6px; letter-spacing: .04em; text-transform: uppercase; font-size: 11px; }
+    label { display: block; margin: 12px 0 4px; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .05em; }
+    .row { display: flex; align-items: center; gap: 12px; }
+    .row label { margin: 0; flex: 0 0 auto; }
+    input[type="range"] { width: 100%; accent-color: var(--orange); }
+    input[type="color"] { width: 46px; height: 30px; padding: 0; border: 1px solid var(--line); background: var(--panel); border-radius: 6px; }
+    select, input[type="file"] {
+      width: 100%; background: #0e1014; color: var(--txt);
+      border: 1px solid var(--line); border-radius: 7px; padding: 8px 10px;
+    }
+    .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+    .seg button {
+      background: #0e1014; color: var(--muted); border: 0; padding: 8px 16px;
+      cursor: pointer; font: inherit;
+    }
+    .seg button.active { background: var(--orange); color: #110a02; font-weight: 700; }
+    .val { color: var(--orange); font-variant-numeric: tabular-nums; min-width: 42px; text-align: right; }
+    .chk { display: flex; align-items: center; gap: 9px; margin: 12px 0 0; color: var(--txt); }
+    .chk input { width: 16px; height: 16px; accent-color: var(--orange); }
+    .pastebox {
+      border: 1px dashed var(--line); border-radius: 8px; padding: 18px; text-align: center;
+      color: var(--muted); background: #0e1014; cursor: text;
+    }
+    .pastebox:focus { outline: 1px solid var(--orange); color: var(--txt); }
+    .thumb { margin-top: 10px; max-width: 100%; max-height: 120px; border: 1px solid var(--line); border-radius: 6px; display: none; }
+    .actions { display: flex; gap: 10px; margin-top: 8px; }
+    .btn { background: var(--orange); color: #110a02; border: 0; border-radius: 8px; padding: 10px 18px; font-weight: 700; cursor: pointer; }
+    .btn.ghost { background: transparent; color: var(--muted); border: 1px solid var(--line); }
+    .autonote { color: var(--muted); font-size: 12px; align-self: center; }
+    #saved { color: var(--orange); opacity: 0; transition: opacity .2s; align-self: center; }
+    #saved.show { opacity: 1; }
+    canvas#preview { width: 100%; flex: 1; border: 1px solid var(--line); border-radius: 10px; background: #000; }
+    .pv-note { color: var(--muted); font-size: 12px; }
+    kbd { background: #0e1014; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 5px; padding: 1px 7px; font: 12px/1.4 ui-monospace, monospace; color: var(--orange); }
+    .hk { font: 600 13px/1.4 ui-monospace, monospace; letter-spacing: .04em; }
+    .hk.capturing { outline: 2px solid var(--orange); color: var(--orange); border-color: var(--orange); }
+  </style>
+</head>
+<body>
+  <div class="form">
+    <h1><b>Nanosuit</b> Curtain</h1>
+    <p class="sub">Drop a curtain over any page to kill distractions. Toggle with
+      <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>H</kbd>, the right-click menu, or the toolbar icon.
+      Rebind the hotkey at <code>chrome://extensions/shortcuts</code> (or <code>vivaldi://extensions/shortcuts</code>).</p>
+
+    <fieldset>
+      <legend>Curtain type</legend>
+      <div class="seg" id="modeSeg">
+        <button data-mode="pattern">Hexagon pattern</button>
+        <button data-mode="image">Custom image</button>
+      </div>
+
+      <div id="imageOpts" hidden>
+        <label>Paste an image (Ctrl+V) or pick a file</label>
+        <div class="pastebox" id="pasteBox" tabindex="0">Click here, then paste an image from your clipboard…</div>
+        <input type="file" id="fileInput" accept="image/*" style="margin-top:10px" />
+        <img id="thumb" class="thumb" alt="preview" />
+        <label>Fit</label>
+        <select id="imageFit">
+          <option value="cover">Cover (fill screen)</option>
+          <option value="contain">Contain (fit whole image)</option>
+          <option value="tile">Tile (repeat)</option>
+          <option value="center">Center (actual size)</option>
+        </select>
+      </div>
+    </fieldset>
+
+    <fieldset id="patternOpts">
+      <legend>Hexagon look</legend>
+      <label>Carbon color / Energy glow color</label>
+      <div class="row">
+        <input type="color" id="carbonColor" />
+        <input type="color" id="glowColor" />
+      </div>
+
+      <label>Glow intensity</label>
+      <div class="row"><input type="range" id="glowIntensity" min="0" max="1" step="0.05" /><span class="val" id="glowIntensityV"></span></div>
+
+      <label>Hexagon size</label>
+      <div class="row"><input type="range" id="hexSize" min="22" max="90" step="1" /><span class="val" id="hexSizeV"></span></div>
+
+      <label class="chk"><input type="checkbox" id="animate" /> Animate the energy glow</label>
+    </fieldset>
+
+    <fieldset>
+      <legend>General</legend>
+      <label>Curtain opacity</label>
+      <div class="row"><input type="range" id="opacity" min="0.5" max="1" step="0.02" /><span class="val" id="opacityV"></span></div>
+      <label class="chk"><input type="checkbox" id="showHint" /> Show the “how to dismiss” hint when it opens</label>
+      <label class="chk"><input type="checkbox" id="keyboardThrough" /> Let the keyboard operate the page through the curtain (mouse stays blocked)</label>
+      <p class="pv-note" style="margin-top:8px">With this on, page &amp; extension keyboard shortcuts still work while the
+        curtain is up — e.g. Space to play/pause or change speed on YouTube — but clicks are still blocked. Default off.</p>
+      <label class="chk" style="margin-left:24px"><input type="checkbox" id="mediaHud" /> Show a media HUD over the curtain (speed / volume / play / seek)</label>
+      <p class="pv-note" style="margin:8px 0 0 24px">When a hotkey changes playback — from this page or another extension like
+        youtube-toolbox — a small readout (e.g. <b>2×</b>) flashes over the curtain. It reflects the real
+        <code>&lt;video&gt;</code>/<code>&lt;audio&gt;</code> state, so it works regardless of which extension caused the change. Requires keyboard pass-through.</p>
+    </fieldset>
+
+    <fieldset>
+      <legend>Toggle hotkey</legend>
+      <label class="chk"><input type="checkbox" id="hotkeyEnabled" /> Enable an in-page toggle hotkey</label>
+      <label>Shortcut (single key or any combo)</label>
+      <div class="row">
+        <button type="button" class="btn ghost hk" id="hotkeyBtn">Click, then press keys…</button>
+        <button type="button" class="btn ghost" id="hotkeyClear">Clear</button>
+      </div>
+      <p class="pv-note" style="margin-top:10px">Works whether the curtain is open or closed, on the active tab.
+        This is separate from the browser shortcut at <code>chrome://extensions/shortcuts</code> and may be
+        blocked on a few protected pages (e.g. <code>chrome://</code>). Press <kbd>Esc</kbd> while capturing to cancel.</p>
+    </fieldset>
+
+    <div class="actions">
+      <button class="btn ghost" id="reset">Reset to defaults</button>
+      <span class="autonote">Changes save automatically</span>
+      <span id="saved">Saved ✓</span>
+    </div>
+  </div>
+
+  <div class="preview-wrap">
+    <div class="pv-note">Live preview</div>
+    <canvas id="preview"></canvas>
+    <div class="pv-note">The real curtain regenerates random panel breaks &amp; energy seams each time it opens.</div>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>
