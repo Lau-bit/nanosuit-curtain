@@ -34,9 +34,9 @@ Options, or via the extensions manager):
   play/pause or change playback speed on YouTube keep working — while the **mouse
   stays blocked**. With pass-through on you can also enable a **media HUD**: when a
   hotkey changes playback (from the page or another extension like *youtube-toolbox*),
-  a small readout — e.g. `2×`, `Volume 60%`, `Paused ⏸` — flashes over the curtain.
-  It's derived from the real `<video>`/`<audio>` state, so it works no matter which
-  extension triggered the change.
+  a small readout — e.g. `2×`, `Volume 60%`, `Paused ⏸`, `Loop on` — flashes over the
+  curtain. It's derived from the real `<video>`/`<audio>` state (media events plus a
+  `loop`-attribute watcher), so it works no matter which extension triggered the change.
 - **Toggle hotkey** — define your own in-page shortcut (a single key or any
   modifier combo). Click the capture button, press the keys, done. It works
   whether the curtain is open or closed and is separate from the rebindable

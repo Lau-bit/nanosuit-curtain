@@ -147,6 +147,33 @@
   ["ratechange", "volumechange", "play", "pause", "seeked"]
     .forEach((ev) => window.addEventListener(ev, onMedia, true));
 
+  // Loop toggling fires no media event (unlike the ones above), but the `loop`
+  // IDL property reflects to the content attribute, so we catch it with a
+  // MutationObserver while the curtain is up. This surfaces e.g. youtube-toolbox's
+  // Ctrl+L loop toggle, whose own "Loop on/off" toast is a normal-z-index element
+  // hidden under our top-layer curtain.
+  let loopObserver = null;
+  function startLoopObserver() {
+    if (loopObserver) return;
+    loopObserver = new MutationObserver((muts) => {
+      if (!active || !settings.mediaHud || !settings.keyboardThrough) return;
+      for (const mu of muts) {
+        const t = mu.target;
+        if (t && (t.tagName === "VIDEO" || t.tagName === "AUDIO")) {
+          showHud(t.loop ? "Loop on" : "Loop off");
+          break;
+        }
+      }
+    });
+    try {
+      loopObserver.observe(document.documentElement,
+        { subtree: true, attributes: true, attributeFilter: ["loop"] });
+    } catch (_) {}
+  }
+  function stopLoopObserver() {
+    if (loopObserver) { loopObserver.disconnect(); loopObserver = null; }
+  }
+
   // Human label for a hotkey combo, e.g. {code:"KeyH",alt:true,shift:true} -> "Alt+Shift+H".
   function keyName(code) {
     if (!code) return "";
@@ -441,6 +468,7 @@
     try { curtain.focus({ preventScroll: true }); } catch (_) {}
 
     window.addEventListener("resize", onResize, { passive: true });
+    startLoopObserver();
   }
 
   function hide() {
@@ -451,6 +479,7 @@
       curtain.remove();
     }
     window.removeEventListener("resize", onResize);
+    stopLoopObserver();
   }
 
   async function toggle() {
