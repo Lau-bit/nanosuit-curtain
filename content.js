@@ -85,7 +85,11 @@
   const POINTER_EVENTS = ["click", "auxclick", "dblclick", "mousedown", "mouseup",
     "pointerdown", "pointerup", "wheel", "contextmenu", "touchstart", "touchend"];
   const KEY_EVENTS = ["keydown", "keyup", "keypress"];
-  POINTER_EVENTS.forEach((ev) => window.addEventListener(ev, interceptPointer, true));
+  // wheel/touchstart/touchend are passive by default on window, so a plain
+  // capture listener can't preventDefault() (Chrome logs a warning and ignores
+  // it). Register with passive:false so our scroll/touch blocking actually takes.
+  POINTER_EVENTS.forEach((ev) =>
+    window.addEventListener(ev, interceptPointer, { capture: true, passive: false }));
   KEY_EVENTS.forEach((ev) => window.addEventListener(ev, interceptKey, true));
 
   // Media-state HUD. We can't surface another extension's own toast over our
