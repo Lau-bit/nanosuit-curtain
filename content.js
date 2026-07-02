@@ -454,41 +454,75 @@
       } catch (_) { hint.style.opacity = "0"; }
     }
 
-    // Large-but-lowkey close affordance, centered along the bottom. Big hit area
-    // so it's easy to find/hit, but sits at low opacity in the suit's own colors
-    // so it doesn't shout; it brightens on hover. Clicking closes the curtain.
-    // (Its clicks are opted out of the global input blocker in interceptPointer.)
+    // Large-but-lowkey close affordance, centered along the bottom: one solid
+    // (non-see-through) hex panel, same flat-top hex silhouette as the field,
+    // standing on a darker "riser" hex a few px below it so it reads as a tile
+    // that has physically risen out of the suit's own armor plating. Clicking
+    // closes the curtain. (Its clicks are opted out of the global input
+    // blocker in interceptPointer.)
     const glow = settings.glowColor;
     const carbon = settings.carbonColor;
+    const HEX_CLIP = "polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)";
+    const hexW = 200;
+    const hexH = Math.round(hexW * (Math.sqrt(3) / 2));
+
+    // The riser: a squat, darker, slightly larger duplicate hex sitting just
+    // under the button's resting position, standing in as the base/plinth the
+    // panel has been pushed up out of (it peeks out around the button's edges).
+    const riser = document.createElement("div");
+    const riserW = hexW + 20;
+    const riserH = Math.round(riserW * (Math.sqrt(3) / 2));
+    riser.style.cssText = [
+      "position:absolute", "left:50%", "bottom:52px", "transform:translateX(-50%)",
+      `width:${riserW}px`, `height:${riserH}px`,
+      `clip-path:${HEX_CLIP}`, `background:${shade(carbon, -0.35)}`,
+      `border:2px solid ${glow}55`,
+      "pointer-events:none"
+    ].join(";");
+    curtain.appendChild(riser);
+
     const closeBtn = document.createElement("button");
     closeBtn.id = CLOSE_BTN_ID;
     closeBtn.type = "button";
     closeBtn.setAttribute("aria-label", "Close curtain");
-    closeBtn.textContent = "CLOSE CURTAIN";
-    const restIdle = "0.22", restHover = "0.92";
+    closeBtn.textContent = "CC";
+    const restIdle = "0.55", restHover = "1";
+    const bottomIdle = 64, bottomHover = 76;
+    const dropIdle = `drop-shadow(0 0 16px ${glow}88) drop-shadow(0 14px 10px rgba(0,0,0,.55))`;
+    const dropHover = `drop-shadow(0 0 32px ${glow}) drop-shadow(0 26px 14px rgba(0,0,0,.65))`;
     closeBtn.style.cssText = [
-      "position:absolute", "left:50%", "bottom:64px", "transform:translateX(-50%)",
-      "min-width:260px", "padding:20px 56px",
+      "position:absolute", "left:50%", `bottom:${bottomIdle}px`, "transform:translateX(-50%)",
+      `width:${hexW}px`, `height:${hexH}px`,
       "display:flex", "align-items:center", "justify-content:center",
       "box-sizing:border-box", "pointer-events:auto", "cursor:pointer",
-      "font:700 15px/1 system-ui,Segoe UI,Roboto,sans-serif",
-      "letter-spacing:.28em", "text-transform:uppercase",
-      `color:${glow}`, `background:${carbon}66`,
-      `border:1.5px solid ${glow}`, "border-radius:14px",
-      "backdrop-filter:blur(2px)", "-webkit-backdrop-filter:blur(2px)",
+      `clip-path:${HEX_CLIP}`, `border:3px solid ${glow}`,
+      "font:700 32px/1 system-ui,Segoe UI,Roboto,sans-serif",
+      "letter-spacing:.1em",
+      `color:${glow}`,
+      `background:linear-gradient(155deg, ${shade(carbon, 0.16)} 0%, ${shade(carbon, 0.02)} 45%, ${shade(carbon, -0.1)} 100%)`,
+      `box-shadow:inset 0 3px 8px ${shade(carbon, 0.25)}, inset 0 -16px 22px rgba(0,0,0,.6)`,
       `text-shadow:0 0 10px ${glow}`,
+      `filter:${dropIdle}`,
       "outline:none", "user-select:none",
-      `opacity:${restIdle}`, "transition:opacity .18s ease, box-shadow .18s ease"
+      `opacity:${restIdle}`, "transition:opacity .18s ease, bottom .18s ease, filter .18s ease"
     ].join(";");
     // Hover/focus feedback via non-intercepted events (mouseenter/leave and
     // focus aren't on the blocked list, so no interceptor exception is needed).
+    // Rising further off the riser (and brightening) on hover sells the "lifts
+    // up to meet you" read. The rise itself is held off by HOVER_DELAY so a
+    // passing cursor doesn't trigger it; leaving settles back immediately.
+    const HOVER_DELAY = ".33s";
     const lift = () => {
+      closeBtn.style.transitionDelay = HOVER_DELAY;
       closeBtn.style.opacity = restHover;
-      closeBtn.style.boxShadow = `0 0 26px ${glow}66, inset 0 0 18px ${glow}22`;
+      closeBtn.style.bottom = bottomHover + "px";
+      closeBtn.style.filter = dropHover;
     };
     const settle = () => {
+      closeBtn.style.transitionDelay = "0s";
       closeBtn.style.opacity = restIdle;
-      closeBtn.style.boxShadow = "none";
+      closeBtn.style.bottom = bottomIdle + "px";
+      closeBtn.style.filter = dropIdle;
     };
     closeBtn.addEventListener("mouseenter", lift);
     closeBtn.addEventListener("focus", lift);
