@@ -11,6 +11,7 @@
   window.__nanosuitCurtainLoaded = true;
 
   const CURTAIN_ID = "__nanosuit-curtain";
+  const CLOSE_BTN_ID = "__nanosuit-curtain-close";
   const Z = 2147483647;
 
   const DEFAULTS = {
@@ -42,6 +43,10 @@
   // do anything while the curtain is `active`.
   function interceptPointer(e) {
     if (!active) return;
+    // Let the in-curtain close button receive its clicks. Everything else on the
+    // curtain is dead to input; this is the one interactive affordance, so we opt
+    // its events out of the global blocker before they get stopped at capture.
+    if (e.target && e.target.closest && e.target.closest("#" + CLOSE_BTN_ID)) return;
     if (e.type === "contextmenu") {
       // Keep the page from seeing it, but let the browser's native menu open so
       // the "Toggle Nanosuit Curtain" item is reachable. (No preventDefault.)
@@ -448,6 +453,52 @@
         );
       } catch (_) { hint.style.opacity = "0"; }
     }
+
+    // Large-but-lowkey close affordance, centered along the bottom. Big hit area
+    // so it's easy to find/hit, but sits at low opacity in the suit's own colors
+    // so it doesn't shout; it brightens on hover. Clicking closes the curtain.
+    // (Its clicks are opted out of the global input blocker in interceptPointer.)
+    const glow = settings.glowColor;
+    const carbon = settings.carbonColor;
+    const closeBtn = document.createElement("button");
+    closeBtn.id = CLOSE_BTN_ID;
+    closeBtn.type = "button";
+    closeBtn.setAttribute("aria-label", "Close curtain");
+    closeBtn.textContent = "CLOSE CURTAIN";
+    const restIdle = "0.22", restHover = "0.92";
+    closeBtn.style.cssText = [
+      "position:absolute", "left:50%", "bottom:64px", "transform:translateX(-50%)",
+      "min-width:260px", "padding:20px 56px",
+      "display:flex", "align-items:center", "justify-content:center",
+      "box-sizing:border-box", "pointer-events:auto", "cursor:pointer",
+      "font:700 15px/1 system-ui,Segoe UI,Roboto,sans-serif",
+      "letter-spacing:.28em", "text-transform:uppercase",
+      `color:${glow}`, `background:${carbon}66`,
+      `border:1.5px solid ${glow}`, "border-radius:14px",
+      "backdrop-filter:blur(2px)", "-webkit-backdrop-filter:blur(2px)",
+      `text-shadow:0 0 10px ${glow}`,
+      "outline:none", "user-select:none",
+      `opacity:${restIdle}`, "transition:opacity .18s ease, box-shadow .18s ease"
+    ].join(";");
+    // Hover/focus feedback via non-intercepted events (mouseenter/leave and
+    // focus aren't on the blocked list, so no interceptor exception is needed).
+    const lift = () => {
+      closeBtn.style.opacity = restHover;
+      closeBtn.style.boxShadow = `0 0 26px ${glow}66, inset 0 0 18px ${glow}22`;
+    };
+    const settle = () => {
+      closeBtn.style.opacity = restIdle;
+      closeBtn.style.boxShadow = "none";
+    };
+    closeBtn.addEventListener("mouseenter", lift);
+    closeBtn.addEventListener("focus", lift);
+    closeBtn.addEventListener("mouseleave", settle);
+    closeBtn.addEventListener("blur", settle);
+    closeBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      hide();
+    });
+    curtain.appendChild(closeBtn);
 
     return curtain;
   }
